@@ -1,0 +1,116 @@
+{
+  "targets": [
+    {
+      "ticket": 100,
+      "name": "Task Type",
+      "listScreen": "TaskTypesManagement",
+      "formScreen": "TaskType",
+      "idParam": "TaskTypeId",
+      "envId": "TASK_TYPE_ID",
+      "expectedFields": [
+        "Name",
+        "DefaultDescription",
+        "DefaultPriorityId",
+        "IsSystemType"
+      ]
+    },
+    {
+      "ticket": 102,
+      "name": "Division",
+      "listScreen": "DivisionsManagement",
+      "formScreen": "Division",
+      "idParam": "DivisionId",
+      "envId": "DIVISION_ID",
+      "expectedFields": [
+        "Code",
+        "Name"
+      ]
+    },
+    {
+      "ticket": 103,
+      "name": "Department",
+      "listScreen": "DepartmentsManagement",
+      "formScreen": "Department",
+      "idParam": "DepartmentId",
+      "envId": "DEPARTMENT_ID",
+      "expectedFields": [
+        "Code",
+        "Name"
+      ]
+    },
+    {
+      "ticket": 104,
+      "name": "Section",
+      "listScreen": "SectionsManagement",
+      "formScreen": "Section",
+      "idParam": "SectionId",
+      "envId": "SECTION_ID",
+      "expectedFields": [
+        "Code",
+        "Name"
+      ]
+    },
+    {
+      "ticket": 105,
+      "name": "Group",
+      "listScreen": "GroupsManagement",
+      "formScreen": "Group",
+      "idParam": "OrgGroupId",
+      "envId": "GROUP_ID",
+      "expectedFields": [
+        "Code",
+        "Name"
+      ]
+    },
+    {
+      "ticket": 106,
+      "name": "Store Area Team",
+      "listScreen": "StoreAreaTeamsManagement",
+      "formScreen": "StoreAreaTeam",
+      "idParam": "StoreAreaTeamId",
+      "envId": "STORE_AREA_TEAM_ID",
+      "expectedFields": [
+        "Code",
+        "Name"
+      ]
+    },
+    {
+      "ticket": 107,
+      "name": "Cost Center",
+      "listScreen": "CostCentersManagement",
+      "formScreen": "CostCenter",
+      "idParam": "CostCenterId",
+      "envId": "COST_CENTER_ID",
+      "expectedFields": [
+        "Code",
+        "Name"
+      ]
+    },
+    {
+      "ticket": 110,
+      "name": "Insurer",
+      "listScreen": "InsurersManagement",
+      "formScreen": "Insurer",
+      "idParam": "InsurerId",
+      "envId": "INSURER_ID",
+      "expectedFields": [
+        "Name",
+        "Email",
+        "Claim Type",
+        "Description"
+      ]
+    },
+    {
+      "ticket": 113,
+      "name": "Case Reason",
+      "listScreen": "CaseReasonsManagement",
+      "formScreen": "CaseReasonForm",
+      "idParam": "CaseReasonId",
+      "envId": "CASE_REASON_ID",
+      "expectedFields": [
+        "Case Action",
+        "Reason"
+      ]
+    }
+  ]
+}
