@@ -85,7 +85,7 @@ Not covered yet:
 
 **Isolation:** every test creates its own records with a unique key `PWT#########`, and the fixture deactivates and deletes them after the test, pass or fail. The `masterdata-cleanup` teardown then removes any `PWT` leftovers.
 
-**FSD gaps** (`fsd-gaps.spec.ts`): GAP01 priority options, GAP02 Activate "Proceed", GAP03 Save disabled until a change, GAP04 Department column names, GAP05 Save changes confirmation pop-up, GAP06 column pop-up Apply / default view. These are tests that assert the FSD where the app differs today. They are marked `test.fail()`, so they pass while the gap exists. When the app is fixed they go red. Then remove the `test.fail()` line.
+**FSD gaps** (`fsd-gaps.spec.ts`): GAP01 priority options, GAP02 Activate "Proceed", GAP03 Save disabled until a change, GAP04 Department column names, GAP05 Save changes confirmation pop-up, GAP06 column pop-up Apply hides the column (keeping it after a reload is not required). These are tests that assert the FSD where the app differs today. They are marked `test.fail()`, so they pass while the gap exists. When the app is fixed they go red. Then remove the `test.fail()` line.
 
 ### Run
 GitHub: Actions → **Master data tests** → Run workflow (`grep` e.g. `@division`, `workers`).

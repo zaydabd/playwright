@@ -69,8 +69,8 @@ test.describe('FSD gaps', { tag: ['@masterdata', '@fsd-gap'] }, () => {
       await expect(modal(page, /save changes/i)).toBeVisible({ timeout: 5000 });
     });
 
-    test('GAP06 Column pop-up Apply hides the column and keeps it as the default view (FSD 9.5 listing)', async ({ md }) => {
-      test.fail(true, 'Apply closes the pop-up but the column stays and the choice is not saved');
+    test('GAP06 Column pop-up Apply hides the column (FSD 9.3 listing)', async ({ md }) => {
+      test.fail(true, 'Apply closes the pop-up but the column stays');
       const list = md.list();
       const k = await md.create();
       await list.find(k);
@@ -79,9 +79,8 @@ test.describe('FSD gaps', { tag: ['@masterdata', '@fsd-gap'] }, () => {
         await picker.open();
         await picker.option(HIDE).click();
         await picker.apply();
+        // Keeping the choice after a reload is not required (agreed with the team).
         expect(await list.headers()).not.toContain(HIDE);
-        await list.open();
-        expect(await list.headers(), 'kept after reload').not.toContain(HIDE);
       } finally {
         await restoreColumns(list);
       }
