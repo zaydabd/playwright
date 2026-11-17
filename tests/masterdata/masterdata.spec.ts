@@ -7,13 +7,15 @@
  *   TC03 record lifecycle  – deactivate (cancel/proceed) → edit → activate → deactivate → delete (cancel/delete)
  *   TC04 bulk actions      – bulk button enablement + bulk deactivate / activate / delete
  *   TC07 listing           – column sort asc/desc, record counter
+ *   TC09 concurrency       – stale status change / stale edit / edit of a deleted record are refused
+ *   TC10 column pop-up     – lists columns, search, untick, Reset, Apply closes
  * TC08 pagination runs once (Division): the pager is the same component on every list.
  *
  * Isolation: each test creates its own records with a unique key (PWT#########)
  * and the `md` fixture deactivates + deletes them afterwards.
  */
 import { test, expect, settle } from './fixtures';
-import { editValuesFor, expectSuccessToast, modal, valuesFor } from './pages';
+import { editValuesFor, expectSuccessToast, FormPage, HIDE, ListPage, modal, valuesFor } from './pages';
 import { targets } from './targets';
 
 const tag = (name: string) => '@' + name.toLowerCase().replace(/\s+/g, '-');
@@ -38,7 +40,8 @@ for (const t of targets) {
 
       // FSD: listing columns (the table only renders when it has rows)
       const headers = (await page.locator('table thead th').allInnerTexts()).map(h => h.trim());
-      for (const col of t.columns) expect.soft(headers, `column "${col}"`).toContain(col);
+      // "Created on" is skipped here: GAP06 hides it briefly and may run in parallel.
+      for (const col of t.columns.filter(c => c !== HIDE)) expect.soft(headers, `column "${col}"`).toContain(col);
       for (const [label, value] of Object.entries(valuesFor(t, k))) {
         if (value) await expect(row, `row shows ${label}`).toContainText(value);
       }
@@ -145,6 +148,9 @@ for (const t of targets) {
       await list.confirmDelete('Cancel');
       await expect(list.row(k)).toHaveCount(1);
       await list.rowAction(k, 'Delete');
+      await list.confirmDelete('Close');
+      await expect(list.row(k)).toHaveCount(1);
+      await list.rowAction(k, 'Delete');
       await list.confirmDelete('Delete');
       await expectSuccessToast(page);
       await list.find(k);
@@ -224,6 +230,88 @@ for (const t of targets) {
       expect(await order(), 'descending after 2nd click').toEqual(['b', 'a']);
       // Search still applies after sorting
       await expect(list.rows).toHaveCount(2);
+    });
+
+    test('TC09 concurrency: stale status change, stale edit and edit of a deleted record are blocked', async ({ md, page, context }) => {
+      // A second tab plays "another user": it acts on the record after this tab has loaded it.
+      const list = md.list();
+      const other = await context.newPage();
+      const otherList = new ListPage(other, t);
+      const updated = page.getByRole('alert').filter({ hasText: /has been updated\. Please refresh/i });
+      const editIn = async (l: ListPage, k: string) => {
+        await l.open(); await l.find(k); await l.rowAction(k, 'Edit');
+        const f = new FormPage(l.page, t); await f.waitLoaded(); return f;
+      };
+      const k = await md.create();
+
+      // 1. Stale list: the other user deactivates first; this tab's Deactivate is refused
+      await list.find(k);
+      await otherList.open(); await otherList.find(k);
+      await otherList.rowAction(k, 'Deactivate'); await otherList.confirmStatus('Deactivate', 'Proceed');
+      await list.rowAction(k, 'Deactivate');
+      let seen = expect(updated).toBeVisible({ timeout: 20_000 }); // message is short-lived: watch while acting
+      await list.confirmStatus('Deactivate', 'Proceed');
+      await seen;
+      await list.waitStatus(k, 'Inactive');
+
+      // 2. Stale edit: the other user saves first; this tab's save is refused and their values are kept
+      const form = await editIn(list, k);
+      const otherForm = await editIn(otherList, k);
+      await otherForm.fill(editValuesFor(t, k));
+      await otherForm.saveAndUpdate();
+      await otherForm.acceptSaveConfirmIfShown();
+      await expect(other).toHaveURL(new RegExp(`/${t.listPath}(\\?|$)`));
+      const f = t.fields.find(x => x.kind === 'text' && x.editValue)!;
+      const mine = `${f.value(k)} A`;
+      await form.fill({ [f.label]: mine });
+      seen = expect(updated).toBeVisible({ timeout: 20_000 });
+      await form.saveAndUpdate();
+      await form.acceptSaveConfirmIfShown();
+      await seen;
+      await expect(page).toHaveURL(new RegExp(`/${t.formScreen}\\?`)); // stays on the edit page
+      await list.open(); await list.find(k);
+      await expect(list.row(k)).toContainText(f.editValue!(k));
+      await expect(list.row(k)).not.toContainText(mine);
+
+      // 3. Deleted while editing: "This record no longer exists." → OK returns to the listing (FSD 9.2.3)
+      const form2 = await editIn(list, k);
+      await otherList.open(); await otherList.find(k);
+      await otherList.rowAction(k, 'Delete'); await otherList.confirmDelete('Delete');
+      await form2.fill({ [f.label]: mine });
+      await form2.saveAndUpdate();
+      await form2.acceptSaveConfirmIfShown();
+      const gone = modal(page, /no longer exists/i);
+      await expect(gone).toBeVisible({ timeout: 15_000 });
+      await gone.getByRole('button', { name: 'OK', exact: true }).click();
+      await expect(page).toHaveURL(new RegExp(`/${t.listPath}(\\?|$)`));
+      await list.find(k);
+      await expect(list.row(k)).toHaveCount(0);
+      await other.close();
+    });
+
+    test('TC10 column customisation pop-up: lists columns, search, untick, Reset', async ({ md }) => {
+      const list = md.list();
+      const k = await md.create();              // the table (and the "+" icon) only renders with rows
+      await list.find(k);
+      const picker = list.columnPicker();
+      await picker.open();
+      expect(await picker.options()).toEqual(expect.arrayContaining(t.columns));
+      for (const c of t.columns) await expect(picker.option(c), `${c} ticked by default`).toHaveAttribute('aria-selected', 'true');
+      // Search filters the column list
+      await picker.search('Created');
+      await expect(picker.option(HIDE)).toBeVisible();
+      await expect(picker.option(t.sortColumn)).toBeHidden();
+      await picker.search('');
+      await expect(picker.option(t.sortColumn)).toBeVisible();
+      // Untick, then Reset ticks it again (nothing is saved)
+      await picker.option(HIDE).click();
+      await expect(picker.option(HIDE)).toHaveAttribute('aria-selected', 'false');
+      await picker.reset();
+      await expect(picker.option(HIDE)).toHaveAttribute('aria-selected', 'true');
+      // Apply closes the pop-up; all columns still shown
+      await picker.apply();
+      await expect(picker.balloon).toBeHidden();
+      expect(await list.headers()).toEqual(expect.arrayContaining(t.columns));
     });
   });
 }

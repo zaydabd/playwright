@@ -6,7 +6,7 @@
  * passes" and goes red: then delete the `test.fail()` line.
  */
 import { test, expect, settle } from './fixtures';
-import { modal } from './pages';
+import { editValuesFor, HIDE, modal, restoreColumns } from './pages';
 import { targets } from './targets';
 
 const taskType = targets.find(t => t.ticket === 100)!;
@@ -51,6 +51,40 @@ test.describe('FSD gaps', { tag: ['@masterdata', '@fsd-gap'] }, () => {
       await list.rowAction(k, 'Edit');
       await md.form().waitLoaded();
       await expect(page.getByRole('button', { name: 'Save and update', exact: true })).toBeDisabled({ timeout: 5000 });
+    });
+
+    test('GAP05 Save shows a "Save changes" confirmation pop-up (FSD 9.2.3)', async ({ md, page }) => {
+      test.fail(true, 'App saves immediately, without a confirmation pop-up');
+      const list = md.list();
+      const k = await md.create();
+      await list.find(k);
+      await list.rowAction(k, 'Deactivate');
+      await list.confirmStatus('Deactivate', 'Proceed');
+      await list.waitStatus(k, 'Inactive');
+      await list.rowAction(k, 'Edit');
+      const form = md.form();
+      await form.waitLoaded();
+      await form.fill(editValuesFor(division, k));
+      await form.saveAndUpdate();
+      await expect(modal(page, /save changes/i)).toBeVisible({ timeout: 5000 });
+    });
+
+    test('GAP06 Column pop-up Apply hides the column and keeps it as the default view (FSD 9.5 listing)', async ({ md }) => {
+      test.fail(true, 'Apply closes the pop-up but the column stays and the choice is not saved');
+      const list = md.list();
+      const k = await md.create();
+      await list.find(k);
+      const picker = list.columnPicker();
+      try {
+        await picker.open();
+        await picker.option(HIDE).click();
+        await picker.apply();
+        expect(await list.headers()).not.toContain(HIDE);
+        await list.open();
+        expect(await list.headers(), 'kept after reload').not.toContain(HIDE);
+      } finally {
+        await restoreColumns(list);
+      }
     });
   });
 

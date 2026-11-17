@@ -124,7 +124,8 @@ export const targets: Target[] = [
     fields: [
       // First real option is used; the test is skipped if the dropdown has no options.
       { label: 'Case action *', kind: 'select', required: true, value: () => '' },
-      { label: 'Reason *', kind: 'text', required: true, unique: true, value: k => `PW reason ${k}`, editValue: k => `PW reason ${k} edited` },
+      // Uniqueness of a reason is not specified in the FSD and the app accepts duplicates.
+      { label: 'Reason *', kind: 'text', required: true, value: k => `PW reason ${k}`, editValue: k => `PW reason ${k} edited` },
     ],
     columns: ['Status', 'Created on', 'Created by', 'Action'],
     rowKey: k => `PW reason ${k}`,
