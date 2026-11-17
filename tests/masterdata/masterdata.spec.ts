@@ -6,6 +6,8 @@
  *   TC02 form validation   – unsaved-changes prompt, mandatory fields, uniqueness
  *   TC03 record lifecycle  – deactivate (cancel/proceed) → edit → activate → deactivate → delete (cancel/delete)
  *   TC04 bulk actions      – bulk button enablement + bulk deactivate / activate / delete
+ *   TC07 listing           – column sort asc/desc, record counter
+ * TC08 pagination runs once (Division): the pager is the same component on every list.
  *
  * Isolation: each test creates its own records with a unique key (PWT#########)
  * and the `md` fixture deactivates + deletes them afterwards.
@@ -205,8 +207,54 @@ for (const t of targets) {
       await expect(list.row(a)).toHaveCount(0);
       await expect(list.row(b)).toHaveCount(0);
     });
+
+    test('TC07 listing: sort ascending/descending and record counter', async ({ md }) => {
+      const list = md.list();
+      const base = md.key().slice(0, -1);
+      const a = await md.create(base + '1');
+      const b = await md.create(base + '2');
+      await list.find(base);
+      await expect(list.rows).toHaveCount(2);
+      await expect(list.counter).toHaveText(/1\s*to\s*2\s*of\s*2\s*records/);
+
+      const order = async () => (await list.columnValues(t.sortColumn)).map(v => (v.includes(a) ? 'a' : v.includes(b) ? 'b' : v));
+      await list.sortBy(t.sortColumn);
+      expect(await order(), 'ascending after 1st click').toEqual(['a', 'b']);
+      await list.sortBy(t.sortColumn);
+      expect(await order(), 'descending after 2nd click').toEqual(['b', 'a']);
+      // Search still applies after sorting
+      await expect(list.rows).toHaveCount(2);
+    });
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* Pagination – same component on every list, so tested once          */
+/* ------------------------------------------------------------------ */
+test.describe('Pagination (10 per page)', { tag: ['@masterdata', '@pagination', '@division'] }, () => {
+  test.use({ target: targets.find(x => x.ticket === 102)! });
+
+  test('TC08 11 records show as 10 on page 1 and 1 on page 2', async ({ md }) => {
+    test.setTimeout(12 * 60_000);
+    const list = md.list();
+    const base = md.key().slice(0, -2);
+    const keys: string[] = [];
+    for (let i = 1; i <= 11; i++) keys.push(await md.create(base + String(i).padStart(2, '0')));
+
+    await list.find(base);
+    await expect(list.rows).toHaveCount(10);
+    await expect(list.counter).toHaveText(/1\s*to\s*10\s*of\s*11\s*records/);
+
+    await list.pager.getByText('2', { exact: true }).click();
+    await settle(list.page);
+    await expect(list.rows).toHaveCount(1);
+    await expect(list.counter).toHaveText(/11\s*to\s*11\s*of\s*11\s*records/);
+
+    await list.pager.getByText('1', { exact: true }).click();
+    await settle(list.page);
+    await expect(list.rows).toHaveCount(10);
+  });
+});
 
 /* ------------------------------------------------------------------ */
 /* Screen-specific rules                                              */

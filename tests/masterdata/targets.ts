@@ -28,6 +28,8 @@ export type Target = {
   columns: string[];
   /** Text that identifies the record in the list row. */
   rowKey: (k: string) => string;
+  /** Sortable list column that holds the unique value (used by the sorting test). */
+  sortColumn: string;
 };
 
 /** Codes are kept short; the existing data uses 12-char codes (e.g. D20240202001). */
@@ -55,6 +57,7 @@ const codeName = (opts: {
     ],
     columns: [...(opts.appColumns ?? [`${opts.label} code`, `${opts.label} name`]), 'Status', 'Created on', 'Created by', 'Last modified on', 'Last modified by', 'Action'],
     rowKey: k => k,
+    sortColumn: opts.appColumns?.[1] ?? `${opts.label} name`,
   };
 };
 
@@ -78,6 +81,7 @@ export const targets: Target[] = [
     ],
     columns: ['Task type', 'Task description', 'Priority', 'Status', 'Created on', 'Created by', 'Last modified on', 'Last modified by', 'Action'],
     rowKey: k => `PW task ${k}`,
+    sortColumn: 'Task type',
   },
   codeName({ ticket: 102, name: 'Division', plural: 'Divisions', list: 'DivisionsManagement', form: 'Division', idParam: 'DivisionId', label: 'Division' }),
   codeName({ ticket: 103, name: 'Department', plural: 'Departments', list: 'DepartmentsManagement', form: 'Department', idParam: 'DepartmentId', label: 'Department', appColumns: ['Code', 'Name'] }),
@@ -104,6 +108,7 @@ export const targets: Target[] = [
     ],
     columns: ['Claim category', 'Insurer', 'Description', 'Email', 'Status', 'Created on', 'Created by', 'Last modified on', 'Last modified by', 'Action'],
     rowKey: k => `PW insurer ${k}`,
+    sortColumn: 'Insurer',
   },
   {
     ticket: 113,
@@ -123,6 +128,7 @@ export const targets: Target[] = [
     ],
     columns: ['Status', 'Created on', 'Created by', 'Action'],
     rowKey: k => `PW reason ${k}`,
+    sortColumn: 'Reason',
   },
 ];
 

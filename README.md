@@ -60,7 +60,7 @@ Front-end tests for the Master Data Management screens (FSD Annex D).
 | Insurance (#110) | `@insurer` |
 | Case reason (#113) | `@case-reason` |
 
-The same 4 tests run on every screen (`targets.ts` holds the per-screen fields):
+The same 5 tests run on every screen (`targets.ts` holds the per-screen fields):
 
 | Test | Covers |
 |---|---|
@@ -68,8 +68,17 @@ The same 4 tests run on every screen (`targets.ts` holds the per-screen fields):
 | TC02 form validation | Unsaved-changes pop-up (Cancel / Leave), "This field is required." per mandatory field, uniqueness of each unique field |
 | TC03 lifecycle | Deactivate pop-up (Cancel, Close X, Proceed), Inactive menu (Edit/Activate/Delete), edit form pre-filled + Save and update, Last modified set, Activate, Delete pop-up (Cancel, Delete) |
 | TC04 bulk actions | Bulk buttons disabled by default, enabled only for eligible selections, mixed selection, bulk deactivate / activate / delete |
+| TC07 listing | Column sort: 1st click ascending, 2nd click descending; search kept after sort; "1 to N of N records" counter |
 
-Plus: TC05 side-menu navigation, TC06 system-created task types locked.
+Plus, run once:
+- TC05 side-menu navigation.
+- TC06 system-created task types locked.
+- TC08 pagination (Division, tag `@pagination`): 11 records → 10 on page 1, 1 on page 2. The pager is the same component on every list.
+
+Not covered yet:
+- Filter (removed from the app).
+- In-use delete protection (no screen can put a record in use yet).
+- Reminder / escalation and Organisation hierarchy (not built).
 
 **Isolation:** every test creates its own records with a unique key `PWT#########`, and the fixture deactivates and deletes them after the test, pass or fail. The `masterdata-cleanup` teardown then removes any `PWT` leftovers.
 

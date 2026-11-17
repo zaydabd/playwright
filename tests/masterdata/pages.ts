@@ -49,6 +49,23 @@ export class ListPage {
     return (await this.row(text).locator('td[data-header="Status"]').innerText()).trim();
   }
 
+  /** Click a sortable column header (FSD: 1st click ascending, 2nd descending). */
+  async sortBy(column: string) {
+    await this.page.locator('table thead th.sortable').filter({ hasText: new RegExp(`^\\s*${column}\\s*$`) }).click();
+    await settle(this.page);
+  }
+
+  /** Text of one column for every visible row, top to bottom. */
+  async columnValues(column: string) {
+    return (await this.rows.locator(`td[data-header="${column}"]`).allInnerTexts()).map(s => s.trim());
+  }
+
+  /** Pagination counter, e.g. "1 to 10 of 11 records". */
+  get counter() { return this.page.locator('.pagination-counter').first(); }
+
+  /** Pagination page buttons. */
+  get pager() { return this.page.getByRole('navigation', { name: 'Pagination' }); }
+
   /** Re-search until the row shows `status` (the list can refresh late after a status change). */
   async waitStatus(text: string, status: 'Active' | 'Inactive') {
     await expect.poll(async () => {
