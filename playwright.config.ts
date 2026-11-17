@@ -10,7 +10,8 @@ export default defineConfig({
   timeout: Number(process.env.EXPLORER_TIMEOUT_MS || 25 * 60 * 1000),
   fullyParallel: false,
   workers: Number(process.env.WORKERS || 1),
-  retries: 0,
+  // CI: one retry for intermittent dev-server errors ("problem communicating with the server"). Shown as flaky in the report.
+  retries: process.env.CI ? 1 : 0,
   reporter: CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL: BASE_URL,
