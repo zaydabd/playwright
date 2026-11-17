@@ -43,3 +43,45 @@ npm run explore
 - Only links are followed; screens reached only by button clicks (JS navigation) are not discovered.
 - 40 min job timeout, 20 min crawl budget, `MAX_PAGES` cap.
 - Artifacts kept 7 days. **This repo is public: artifacts can be downloaded by any signed-in GitHub user**, and the HTML contains real dev data.
+
+## 2. Master data tests (`tests/masterdata/`)
+
+Front-end tests for the Master Data Management screens (FSD Annex D).
+
+| Screen | Tag |
+|---|---|
+| Task type (#100) | `@task-type` |
+| Division (#102) | `@division` |
+| Department (#103) | `@department` |
+| Section (#104) | `@section` |
+| Group (#105) | `@group` |
+| Store area team (#106) | `@store-area-team` |
+| Cost center (#107) | `@cost-center` |
+| Insurance (#110) | `@insurer` |
+| Case reason (#113) | `@case-reason` |
+
+The same 4 tests run on every screen (`targets.ts` holds the per-screen fields):
+
+| Test | Covers |
+|---|---|
+| TC01 create | Create button, form, success message, listing columns, search, Active status, "-" in Last modified, only *Deactivate* in the Action menu |
+| TC02 form validation | Unsaved-changes pop-up (Cancel / Leave), "This field is required." per mandatory field, uniqueness of each unique field |
+| TC03 lifecycle | Deactivate pop-up (Cancel, Close X, Proceed), Inactive menu (Edit/Activate/Delete), edit form pre-filled + Save and update, Last modified set, Activate, Delete pop-up (Cancel, Delete) |
+| TC04 bulk actions | Bulk buttons disabled by default, enabled only for eligible selections, mixed selection, bulk deactivate / activate / delete |
+
+Plus: TC05 side-menu navigation, TC06 system-created task types locked.
+
+**Isolation:** every test creates its own records with a unique key `PWT#########`, and the fixture deactivates and deletes them after the test, pass or fail. The `masterdata-cleanup` teardown then removes any `PWT` leftovers.
+
+**FSD gaps** (`fsd-gaps.spec.ts`): tests that assert the FSD where the app differs today. They are marked `test.fail()`, so they pass while the gap exists. When the app is fixed they go red. Then remove the `test.fail()` line.
+
+### Run
+GitHub: Actions → **Master data tests** → Run workflow (`grep` e.g. `@division`, `workers`).
+
+Local:
+```bash
+npm run test:masterdata
+```
+```bash
+npx playwright test --project=masterdata --grep @division
+```

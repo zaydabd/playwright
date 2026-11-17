@@ -1,0 +1,78 @@
+name: Master data tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      grep:
+        description: 'Run only matching tests, e.g. @division, @task-type, TC03 (empty = all)'
+        default: ''
+      workers:
+        description: Parallel browsers
+        default: '3'
+  push:
+    branches: [main]
+    paths:
+      - 'tests/masterdata/**'
+      - 'tests/support/**'
+      - 'tests/auth.setup.ts'
+      - 'playwright.config.ts'
+      - 'package*.json'
+      - '.github/workflows/masterdata.yml'
+
+# Never run two master data runs at once: they share the same app and user.
+concurrency:
+  group: masterdata
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      CI: 'true'
+      BASE_URL: https://avepoint-dev.outsystems.app/BCMS_Web/
+      AVE_USERNAME: ${{ secrets.AVE_USERNAME }}
+      AVE_PASSWORD: ${{ secrets.AVE_PASSWORD }}
+      WORKERS: ${{ inputs.workers || '3' }}
+      SLOW_SCREEN_MS: '1500'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Check secrets
+        run: |
+          if [ -z "$AVE_USERNAME" ] || [ -z "$AVE_PASSWORD" ]; then
+            echo "::error::Repository secrets AVE_USERNAME and AVE_PASSWORD must be set."
+            exit 1
+          fi
+
+      - name: Run master data tests
+        run: |
+          if [ -n "${{ inputs.grep }}" ]; then
+            npx playwright test --project=masterdata --grep "${{ inputs.grep }}"
+          else
+            npx playwright test --project=masterdata
+          fi
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: masterdata-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+          if-no-files-found: ignore

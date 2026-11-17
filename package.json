@@ -4,7 +4,8 @@
   "description": "Playwright explorer and tests for BCMS Web",
   "scripts": {
     "explore": "playwright test --project=explorer",
-    "explore:headed": "playwright test --project=explorer --headed"
+    "explore:headed": "playwright test --project=explorer --headed",
+    "test:masterdata": "playwright test --project=masterdata"
   },
   "repository": {
     "type": "git",
