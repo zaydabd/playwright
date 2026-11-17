@@ -49,6 +49,14 @@ export class ListPage {
     return (await this.row(text).locator('td[data-header="Status"]').innerText()).trim();
   }
 
+  /** Re-search until the row shows `status` (the list can refresh late after a status change). */
+  async waitStatus(text: string, status: 'Active' | 'Inactive') {
+    await expect.poll(async () => {
+      await this.find(text);
+      return this.status(text).catch(() => '');
+    }, { timeout: 30_000, intervals: [0, 1000, 2000] }).toBe(status);
+  }
+
   /** Items in the row "…" menu (read without clicking; balloon is in the DOM). */
   async menuItems(text: string) {
     return (await this.row(text).locator('.osui-overflow-menu__balloon').locator('a, button').allInnerTexts())

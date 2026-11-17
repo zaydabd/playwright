@@ -138,7 +138,7 @@ for (const t of targets) {
       // Delete – needs Inactive; Cancel keeps it, Delete removes it (9.2.2)
       await list.rowAction(k, 'Deactivate');
       await list.confirmStatus('Deactivate', 'Proceed');
-      await list.find(k);
+      await list.waitStatus(k, 'Inactive');
       await list.rowAction(k, 'Delete');
       await list.confirmDelete('Cancel');
       await expect(list.row(k)).toHaveCount(1);

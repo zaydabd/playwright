@@ -47,6 +47,7 @@ export class MasterData {
           if (/^Active$/i.test(status)) {
             await list.rowAction(exact, 'Deactivate');
             await list.confirmStatus('Deactivate', 'Proceed');
+            await list.waitStatus(exact, 'Inactive');
           }
           await list.rowAction(exact, 'Delete');
           await list.confirmDelete('Delete');
@@ -85,6 +86,7 @@ export async function sweep(page: Page, t: Target) {
     if (/^Active$/i.test(status)) {
       await list.rowAction(key, 'Deactivate');
       await list.confirmStatus('Deactivate', 'Proceed');
+      await list.waitStatus(key, 'Inactive');
     }
     await list.rowAction(key, 'Delete');
     await list.confirmDelete('Delete');
